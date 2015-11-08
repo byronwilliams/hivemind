@@ -6,6 +6,7 @@ import (
     "os"
     "time"
     "strconv"
+    "log"
 
     // "io"
     "net/http"
@@ -59,16 +60,20 @@ func listenForTemps(cxt *appContext) {
         _,_,err := ServerConn.ReadFromUDP(buf)
         // fmt.Println("Received ",string(buf[0:n]), " from ",addr)
 
+        if err != nil {
+            log.Println("Error: ",err)
+        }
+
         theId := string(buf[14:30])
         theTemp, err := strconv.ParseFloat(string(buf[33:38]), 32)
         cxt.temps[theId] = float32(theTemp)
 
-        fmt.Println(theId + ":" + strconv.FormatFloat(theTemp, 'f', 2, 32))
+        log.Println(theId + ":" + strconv.FormatFloat(theTemp, 'f', 2, 32))
 
         cxt.mychan <- &Temp{theId, float32(theTemp)}
 
         if err != nil {
-            fmt.Println("Error: ",err)
+            log.Println("Error: ",err)
         }
     }
 }

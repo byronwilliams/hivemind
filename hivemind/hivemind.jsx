@@ -22,6 +22,13 @@ var MainView = React.createClass({
           console.log("message received: " + e.data);
       }
 
+      this.sock.onopen = function() {
+          console.log("connected");
+      }
+
+      this.sock.onclose = function(e) {
+          console.log("connection closed (" + e.code + ")");
+      }
 
     // this.chatRoom.bind('new_message', function(message){
     //   this.setState({messages: this.state.messages.concat(message)})

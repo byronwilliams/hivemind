@@ -59,7 +59,8 @@ func writeToDb(db *leveldb.DB, k string, v string) {
 }
 
 func writeToMind(k string, v string) {
-    ServerAddr,err := net.ResolveUDPAddr("udp","c27f1925-8697-4d56-b83f-d8afd6a7192a.pub.cloud.scaleway.com:32210")
+    ServerAddr,err := net.ResolveUDPAddr("udp","212.47.231.130:32210")
+    // ServerAddr,err := net.ResolveUDPAddr("udp","127.0.0.1:32210")
     CheckError(err)
 
     LocalAddr, err := net.ResolveUDPAddr("udp", "0.0.0.0:0")
@@ -68,8 +69,10 @@ func writeToMind(k string, v string) {
     Conn, err := net.DialUDP("udp", LocalAddr, ServerAddr)
     CheckError(err)
 
+    log.Println("Writing to Mind: " +  k + " - " + v)
     buf := []byte(k + " - " + v)
     _,err = Conn.Write(buf)
+    CheckError(err)
 
     Conn.Close()
 }
