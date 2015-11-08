@@ -10,14 +10,12 @@
 
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire wireOne(10);
-OneWire wireTwo(11);
 
-DallasTemperature sensor10(&wireOne);
-DallasTemperature sensor11(&wireTwo);
+DallasTemperature tempBusOn10(&wireOne);
 
 const int ledPin = 13;
-float lastTempWireOne = -127;
-float lastTempWireTwo = -127;
+float temps[8] = {-127, -127, -127, -127, -127, -127, -127, -127};
+DeviceAddress  MyDS18B20Addresses[8];
 
 void setup(void)
 {
@@ -35,49 +33,33 @@ void setup(void)
   }
 
   pinMode(ledPin, HIGH);
-  sensor10.begin();
-  sensor11.begin();
+  tempBusOn10.begin();
 }
 
 void loop(void)
 {
   int startTime = millis();
 
+  int sensorCount = tempBusOn10.getDeviceCount();
+  tempBusOn10.requestTemperatures();
+  Serial.println("log:dev_count=" + String(sensorCount));
 
-  // Send the command to get temperatures
-  if(true) {
-      sensor10.requestTemperatures();
-      float s10 = sensor10.getTempCByIndex(0);
-      if(s10 != lastTempWireOne) {
-          lastTempWireOne = s10;
-          writeTemp("s10", s10);
-      }
+  int curSensor;
 
-      float s11 = sensor10.getTempCByIndex(1);
-      if(s11 != lastTempWireTwo) {
-          lastTempWireTwo = s11;
-          writeTemp("s11", s11);
-      }
-  } else {
-      sensor10.requestTemperatures();
-      float s10 = sensor10.getTempCByIndex(0);
-      if(s10 != lastTempWireTwo) {
-          lastTempWireOne = s10;
-          writeTemp("10", s10);
-      }
+  for(curSensor = 0; curSensor < sensorCount; curSensor++) {
+      tempBusOn10.getAddress(MyDS18B20Addresses[curSensor], curSensor);
 
-      sensor11.requestTemperatures();
-      float s11 = sensor11.getTempCByIndex(0);
-      if(s11 != lastTempWireTwo) {
-          lastTempWireTwo = s11;
-          writeTemp("11", s11);
+      float s10 = tempBusOn10.getTempCByIndex(curSensor);
+
+      if(s10 != temps[curSensor]) {
+          temps[curSensor] = s10;
+          writeTemp(addressToString(MyDS18B20Addresses[curSensor]), s10);
       }
   }
 
-
   int endTime = millis();
   int elapsed = endTime - startTime;
-  int remaining = 15000 - elapsed;
+  int remaining = 2500 - elapsed;
 
   Serial.println("elapsed:" + String(elapsed));
 
@@ -104,6 +86,21 @@ void processSyncMessage() {
        setTime(pctime); // Sync Arduino clock to the time received on the serial port
      }
   }
+}
+
+String addressToString(DeviceAddress deviceAddress) {
+    static char return_me[18];
+    static char *hex = "0123456789ABCDEF";
+    uint8_t i, j;
+
+    for (i=0, j=0; i<8; i++)
+    {
+         return_me[j++] = hex[deviceAddress[i] / 16];
+         return_me[j++] = hex[deviceAddress[i] & 15];
+    }
+    return_me[j] = '\0';
+
+    return String(return_me);
 }
 
 time_t requestSync()
